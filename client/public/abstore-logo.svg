@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-labelledby="title desc">
+  <title>AB STORE</title>
+  <desc>Gold AB monogram with gear and AB STORE wordmark</desc>
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f9e7a3"/>
+      <stop offset="40%" stop-color="#eec770"/>
+      <stop offset="75%" stop-color="#d39b42"/>
+      <stop offset="100%" stop-color="#b3762a"/>
+    </linearGradient>
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7e3a0"/>
+      <stop offset="100%" stop-color="#c8892f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background for better visibility on transparent contexts -->
+  <rect width="240" height="280" fill="none"/>
+
+  <!-- Monogram -->
+  <g transform="translate(18 10)">
+    <!-- Gear crown -->
+    <g fill="url(#gold)" transform="translate(90 18)">
+      <circle cx="12" cy="20" r="16" />
+      <rect x="10" y="-2" width="4" height="8" rx="1" />
+      <rect x="10" y="34" width="4" height="8" rx="1" />
+      <rect x="-4" y="12" width="10" height="4" rx="1" />
+      <rect x="26" y="12" width="10" height="4" rx="1" />
+      <rect x="3" y="2" width="5" height="8" rx="1" transform="rotate(-35 5 6)" />
+      <rect x="16" y="2" width="5" height="8" rx="1" transform="rotate(35 19 6)" />
+      <rect x="3" y="22" width="5" height="8" rx="1" transform="rotate(35 5 26)" />
+      <rect x="16" y="22" width="5" height="8" rx="1" transform="rotate(-35 19 26)" />
+    </g>
+
+    <!-- Letter A -->
+    <path fill="url(#gold)" d="M38 198 76 64h44l38 134h-26l-10-34H74l-9 34H38Zm47-67h34l-11-37h-12Z"/>
+
+    <!-- Letter B -->
+    <path fill="url(#gold)" d="M140 64h40c27 0 43 12 43 34 0 17-9 29-23 34 17 5 27 16 27 36 0 24-16 38-46 38h-41V64Zm25 102h18c12 0 19-6 19-17 0-11-9-18-23-18h-14v35Zm0-54h19c11 0 18-7 18-17 0-11-7-17-19-17h-18v34Z"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g font-family="Poppins, 'Montserrat', Arial, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="120" y="236" fill="#1d1f23" font-size="34" letter-spacing="6">AB</text>
+    <text x="170" y="236" fill="url(#goldText)" font-size="34" letter-spacing="4">STORE</text>
+  </g>
+</svg>
