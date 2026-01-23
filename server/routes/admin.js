@@ -58,7 +58,7 @@ router.post('/products', upload.array('images', 5), async (req, res) => {
   try {
   const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
-    const images = req.files ? req.files.map(file => `http://localhost:${process.env.PORT || 5000}/uploads/${file.filename}`) : [];
+    const images = req.files ? req.files.map(file => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`) : [];
 
     const product = new Product({
       name,
@@ -93,7 +93,7 @@ router.put('/products/:id', upload.array('images', 5), async (req, res) => {
 
   let images = product.images;
   if (req.files && req.files.length > 0) {
-    const newImages = req.files.map(file => `http://localhost:${process.env.PORT || 5000}/uploads/${file.filename}`);
+    const newImages = req.files.map(file => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`);
     // Append new images to keep existing ones unless explicitly replaced
     images = [...images, ...newImages];
   }

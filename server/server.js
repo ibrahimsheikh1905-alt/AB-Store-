@@ -31,7 +31,6 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://ab-store1.vercel.app"
     ],
     credentials: true,
