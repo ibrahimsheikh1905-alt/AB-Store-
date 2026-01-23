@@ -138,7 +138,7 @@ const OrderHistory = () => {
                     return (
                       <div key={index} className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-b-0">
                         <img
-                          src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                          src={item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded"
                         />

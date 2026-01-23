@@ -77,7 +77,7 @@ const Home = () => {
       images[activeImage] && images[activeImage].startsWith('http')
         ? images[activeImage]
         : images[activeImage]
-        ? `http://localhost:5000${images[activeImage]}`
+        ? `${import.meta.env.VITE_API_URL}${images[activeImage]}`
         : 'https://via.placeholder.com/500x500?text=No+Image';
 
     return (
@@ -320,7 +320,7 @@ const Home = () => {
                         menProducts[0].images && menProducts[0].images[0]
                           ? menProducts[0].images[0].startsWith('http')
                             ? menProducts[0].images[0]
-                            : `http://localhost:5000${menProducts[0].images[0]}`
+                            : `${import.meta.env.VITE_API_URL}${menProducts[0].images[0]}`
                           : 'https://via.placeholder.com/600x600?text=No+Image'
                       }
                       alt={menProducts[0].name}
@@ -360,7 +360,7 @@ const Home = () => {
                       signatureProduct.images && signatureProduct.images[0]
                         ? signatureProduct.images[0].startsWith('http')
                           ? signatureProduct.images[0]
-                          : `http://localhost:5000${signatureProduct.images[0]}`
+                          : `${import.meta.env.VITE_API_URL}${signatureProduct.images[0]}`
                         : 'https://via.placeholder.com/650x650?text=No+Image'
                     }
                     alt={signatureProduct.name}
@@ -431,7 +431,7 @@ const Home = () => {
                   <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl blur-2xl opacity-50 group-hover:opacity-75 transition"></div>
                   {kidsProducts[0] && (
                     <img
-                      src={kidsProducts[0].images && kidsProducts[0].images[0] ? (kidsProducts[0].images[0].startsWith('http') ? kidsProducts[0].images[0] : `http://localhost:5000${kidsProducts[0].images[0]}`) : 'https://via.placeholder.com/600x600?text=No+Image'}
+                      src={kidsProducts[0].images && kidsProducts[0].images[0] ? (kidsProducts[0].images[0].startsWith('http') ? kidsProducts[0].images[0] : `${import.meta.env.VITE_API_URL}${kidsProducts[0].images[0]}`) : 'https://via.placeholder.com/600x600?text=No+Image'}
                       alt={kidsProducts[0].name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 shadow-2xl"
                       onError={(e) => {
