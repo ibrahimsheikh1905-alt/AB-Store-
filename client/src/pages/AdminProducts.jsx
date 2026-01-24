@@ -352,7 +352,7 @@ const AdminProducts = () => {
                         {editingProduct.images.map((img, idx) => (
                           <img
                             key={idx}
-                            src={img.startsWith('http') ? img : `${import.meta.env.VITE_API_URL}${img}`}
+                            src={img.startsWith('http') ? img : `${import.meta.env.VITE_API_URL.replace('/api', '')}${img}`}
                             alt={`Current ${idx + 1}`}
                             className="h-16 w-full object-cover rounded border border-gray-200"
                             onError={(e) => {

@@ -90,7 +90,7 @@ const ProductCard = ({ product }) => {
                 images[activeImage]
                   ? images[activeImage].startsWith('http')
                     ? images[activeImage]
-                    : `${import.meta.env.VITE_API_URL}${images[activeImage]}`
+                    : `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[activeImage]}`
                   : 'https://via.placeholder.com/400x400?text=No+Image'
               }
               alt={product.name}

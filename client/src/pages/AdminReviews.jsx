@@ -118,7 +118,8 @@ const AdminReviews = () => {
                           <img
                             src={review.product.images[0].startsWith('http') 
                               ? review.product.images[0] 
-                              : `${import.meta.env.VITE_API_URL}${review.product.images[0]}`}
+                              : `${import.meta.env.VITE_API_URL.replace('/api', '')}${review.product.images[0]}`}
+                            alt={review.product?.name}
                             alt={review.product?.name}
                             className="w-12 h-12 object-cover rounded mr-3"
                           />

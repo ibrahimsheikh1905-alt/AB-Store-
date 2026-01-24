@@ -54,7 +54,7 @@ const Cart = () => {
                      <div key={item._id} className="border-b border-gray-200 last:border-b-0 p-6 animate-fade-in-up transition-all duration-300 hover:bg-gray-50" style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className="flex items-center space-x-4">
                   <img
-                    src={item.image || 'https://via.placeholder.com/100x100?text=No+Image'}
+                    src={item.image ? (item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.image}`) : 'https://via.placeholder.com/100x100?text=No+Image'}
                     alt={item.name}
                     className="w-24 h-24 object-cover rounded"
                     onError={(e) => {

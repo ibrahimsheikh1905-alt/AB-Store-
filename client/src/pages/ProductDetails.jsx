@@ -143,7 +143,7 @@ const ProductDetails = () => {
                     images[selectedImage]
                       ? images[selectedImage].startsWith('http')
                         ? images[selectedImage]
-                        : `${import.meta.env.VITE_API_URL}${images[selectedImage]}`
+                        : `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[selectedImage]}`
                       : 'https://via.placeholder.com/800x800?text=No+Image'
                   }
                   alt={product.name}
