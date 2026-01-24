@@ -30,10 +30,8 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: [
-      "https://ab-store1.vercel.app"
-    ],
-    credentials: true,
+    origin: "*",
+    credentials: false,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

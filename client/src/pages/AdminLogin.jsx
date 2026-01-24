@@ -23,12 +23,7 @@ const AdminLogin = () => {
     setLoading(false);
 
     if (result.success) {
-      // Admin users only
-      if (!result.user?.isAdmin) {
-        setError('Access denied. Admin credentials required.');
-        return;
-      }
-      navigate('/admin');
+      navigate('/admin/products');
     } else {
       setError(result.error);
     }
