@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { productsAPI } from '../utils/api';
+import { productsAPI, getImageUrl } from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import { formatPrice } from '../utils/currency';
 
@@ -73,12 +73,7 @@ const Home = () => {
       return () => clearInterval(timer);
     }, [hovering, hasMultipleImages, images.length]);
 
-    const currentImg =
-      images[activeImage] && images[activeImage].startsWith('http')
-        ? images[activeImage]
-        : images[activeImage]
-        ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[activeImage]}`
-        : 'https://via.placeholder.com/500x500?text=No+Image';
+    const currentImg = getImageUrl(images[activeImage]);
 
     return (
       <div

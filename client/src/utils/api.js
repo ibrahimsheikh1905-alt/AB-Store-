@@ -41,6 +41,17 @@ api.interceptors.response.use(
   }
 );
 
+const BASE_URL =
+  import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace("/api", "")
+    : "https://ab-store-1.onrender.com";
+
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/150";
+  if (imagePath.startsWith("http")) return imagePath;
+  return `${BASE_URL}${imagePath}`;
+};
+
 // Auth API
 export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),

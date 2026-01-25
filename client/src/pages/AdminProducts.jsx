@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminAPI } from '../utils/api';
+import { adminAPI, getImageUrl } from '../utils/api';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatPrice } from '../utils/currency';
 
@@ -203,7 +203,7 @@ const AdminProducts = () => {
               <tr key={product._id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <img
-                    src={product.images && product.images[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${import.meta.env.VITE_API_URL}${product.images[0]}`) : 'https://via.placeholder.com/100x100?text=No+Image'}
+                    src={getImageUrl(product.images && product.images[0])}
                     alt={product.name}
                     className="h-16 w-16 object-cover rounded"
                     onError={(e) => {
@@ -352,7 +352,7 @@ const AdminProducts = () => {
                         {editingProduct.images.map((img, idx) => (
                           <img
                             key={idx}
-                            src={img.startsWith('http') ? img : `${import.meta.env.VITE_API_URL.replace('/api', '')}${img}`}
+                            src={getImageUrl(img)}
                             alt={`Current ${idx + 1}`}
                             className="h-16 w-full object-cover rounded border border-gray-200"
                             onError={(e) => {

@@ -12,7 +12,7 @@ import {
   FaWhatsapp,
   FaUsers,
 } from 'react-icons/fa';
-import { productsAPI } from '../utils/api';
+import { productsAPI, getImageUrl } from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/currency';
 import ReviewSection from '../components/ReviewSection';
@@ -139,13 +139,7 @@ const ProductDetails = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-200" aria-hidden="true" />
                 <img
                   key={selectedImage}
-                  src={
-                    images[selectedImage]
-                      ? images[selectedImage].startsWith('http')
-                        ? images[selectedImage]
-                        : `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[selectedImage]}`
-                      : 'https://via.placeholder.com/800x800?text=No+Image'
-                  }
+                  src={getImageUrl(images[selectedImage])}
                   alt={product.name}
                   className="relative z-10 h-full w-full object-cover transition duration-700 ease-out"
                   onError={(e) => {

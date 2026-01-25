@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminAPI } from '../utils/api';
+import { adminAPI, getImageUrl } from '../utils/api';
 import { formatPriceWithDecimals } from '../utils/currency';
 
 const AdminOrders = () => {
@@ -102,7 +102,7 @@ const AdminOrders = () => {
                   <div key={index} className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={item.image ? (item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.image}`) : 'https://via.placeholder.com/100x100?text=No+Image'}
+                        src={getImageUrl(item.image)}
                         alt={item.name}
                         className="w-12 h-12 object-cover rounded"
                         onError={(e) => {

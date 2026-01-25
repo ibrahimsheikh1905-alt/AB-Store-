@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ordersAPI, reviewsAPI } from '../utils/api';
+import { ordersAPI, reviewsAPI, getImageUrl } from '../utils/api';
 import { formatPriceWithDecimals } from '../utils/currency';
 import { useAuth } from '../context/AuthContext';
 import { FaCheckCircle, FaTimesCircle, FaShoppingBag, FaStar } from 'react-icons/fa';
@@ -138,7 +138,7 @@ const OrderHistory = () => {
                     return (
                       <div key={index} className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-b-0">
                         <img
-                          src={item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL.replace('/api', '')}${item.image}`}
+                          src={getImageUrl(item.image)}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded"
                         />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/currency';
+import { getImageUrl } from '../utils/api';
 import { FaStar, FaShoppingCart } from 'react-icons/fa';
 
 const ProductCard = ({ product }) => {
@@ -86,13 +87,7 @@ const ProductCard = ({ product }) => {
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-white to-gray-200" aria-hidden="true" />
             <img
               key={activeImage}
-              src={
-                images[activeImage]
-                  ? images[activeImage].startsWith('http')
-                    ? images[activeImage]
-                    : `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[activeImage]}`
-                  : 'https://via.placeholder.com/400x400?text=No+Image'
-              }
+              src={getImageUrl(images[activeImage])}
               alt={product.name}
               className="relative z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105 animate-fade-in"
               onError={(e) => {
