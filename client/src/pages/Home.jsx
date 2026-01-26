@@ -311,13 +311,7 @@ const Home = () => {
                   <div className="relative group">
                     <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/25 to-orange-600/20 rounded-2xl blur-2xl opacity-60 group-hover:opacity-80 transition"></div>
                     <img
-                      src={
-                        menProducts[0].images && menProducts[0].images[0]
-                          ? menProducts[0].images[0].startsWith('http')
-                            ? menProducts[0].images[0]
-                            : `${import.meta.env.VITE_API_URL.replace('/api', '')}${menProducts[0].images[0]}`
-                          : 'https://via.placeholder.com/600x600?text=No+Image'
-                      }
+                      src={getImageUrl(menProducts[0].images && menProducts[0].images[0])}
                       alt={menProducts[0].name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 drop-shadow-[0_25px_60px_rgba(0,0,0,0.4)]"
                       onError={(e) => {
@@ -351,13 +345,7 @@ const Home = () => {
                 <div className="relative p-6 md:p-8 flex items-center justify-center bg-black/30">
                   <div className="absolute -inset-4 bg-gradient-to-b from-white/5 to-black/40 rounded-2xl"></div>
                   <img
-                    src={
-                      signatureProduct.images && signatureProduct.images[0]
-                        ? signatureProduct.images[0].startsWith('http')
-                          ? signatureProduct.images[0]
-                          : `${import.meta.env.VITE_API_URL.replace('/api', '')}${signatureProduct.images[0]}`
-                        : 'https://via.placeholder.com/650x650?text=No+Image'
-                    }
+                    src={getImageUrl(signatureProduct.images && signatureProduct.images[0])}
                     alt={signatureProduct.name}
                     className="relative z-10 w-full max-w-[540px] object-contain drop-shadow-[0_25px_60px_rgba(0,0,0,0.45)]"
                     onError={(e) => {
@@ -426,7 +414,7 @@ const Home = () => {
                   <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl blur-2xl opacity-50 group-hover:opacity-75 transition"></div>
                   {kidsProducts[0] && (
                     <img
-                      src={kidsProducts[0].images && kidsProducts[0].images[0] ? (kidsProducts[0].images[0].startsWith('http') ? kidsProducts[0].images[0] : `${import.meta.env.VITE_API_URL.replace('/api', '')}${kidsProducts[0].images[0]}`) : 'https://via.placeholder.com/600x600?text=No+Image'}
+                      src={getImageUrl(kidsProducts[0].images && kidsProducts[0].images[0])}
                       alt={kidsProducts[0].name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 shadow-2xl"
                       onError={(e) => {

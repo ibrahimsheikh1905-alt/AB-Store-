@@ -118,7 +118,6 @@ const AdminReviews = () => {
                           <img
                             src={getImageUrl(review.product?.images?.[0])}
                             alt={review.product?.name}
-                            alt={review.product?.name}
                             className="w-12 h-12 object-cover rounded mr-3"
                           />
                         )}

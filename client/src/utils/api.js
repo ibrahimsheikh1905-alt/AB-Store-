@@ -48,10 +48,8 @@ const BASE_URL =
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "https://via.placeholder.com/150";
-  if (imagePath.startsWith("http://localhost:5000")) {
-    return imagePath.replace("http://localhost:5000", "https://ab-store-1.onrender.com");
-  }
-  return imagePath;
+  if (imagePath.startsWith("http")) return imagePath;
+  return `${BASE_URL}${imagePath}`;
 };
 
 // Auth API

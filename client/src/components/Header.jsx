@@ -103,7 +103,7 @@ const Header = () => {
                 alt="AB STORE"
                 className="h-10 w-10 object-contain drop-shadow-lg"
               />
-              <span>AB STORE</span>
+              <span className="hidden sm:block">AB STORE</span>
             </Link>
 
             {/* Navigation Links */}

@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminAPI, getImageUrl } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatPrice } from '../utils/currency';
 
 const AdminProducts = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -24,8 +28,14 @@ const AdminProducts = () => {
   });
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (!authLoading) {
+      if (!user || !user.isAdmin) {
+        navigate('/login');
+        return;
+      }
+      fetchProducts();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchProducts = async () => {
     try {
@@ -207,7 +217,7 @@ const AdminProducts = () => {
                     alt={product.name}
                     className="h-16 w-16 object-cover rounded"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                      e.target.src = '/no-image.png';
                     }}
                   />
                 </td>
@@ -356,7 +366,7 @@ const AdminProducts = () => {
                             alt={`Current ${idx + 1}`}
                             className="h-16 w-full object-cover rounded border border-gray-200"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                              e.target.src = '/no-image.png';
                             }}
                           />
                         ))}

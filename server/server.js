@@ -30,7 +30,9 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: ["https://ab-store1.vercel.app"],
+    origin: ["https://ab-store1.vercel.app"
+      , "http://localhost:3000"
+    ],
     credentials: false,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -38,8 +40,10 @@ app.use(
 );app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded images only in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
 
 // Routes
 app.use('/api/auth', authRoutes);
