@@ -94,33 +94,7 @@ cd ../client
 npm install
 ```
 
-### 2. Start Development Servers
-
-**Option 1: Single Command (Recommended)**
-```bash
-npm run dev
-```
-
-**Option 2: Using batch file (Windows)**
-```bash
-start-dev.bat
-```
-
-**Option 3: Using PowerShell script**
-```bash
-.\start-dev.ps1
-```
-
-**Option 4: Manual (separate terminals)**
-```bash
-# Terminal 1 - Backend
-cd server && npm run dev
-
-# Terminal 2 - Frontend
-cd client && npm run dev
-```
-
-### 3. Environment Setup
+### 2. Environment Setup
 
 Create a `.env` file in the `server` directory:
 
@@ -139,13 +113,6 @@ NODE_ENV=development
 ```
 
 **Important:** Change `JWT_SECRET` to a secure random string in production!
-
-### Available Scripts
-
-- `npm run dev` - Start both frontend and backend servers simultaneously
-- `npm run server` - Start only the backend server
-- `npm run client` - Start only the frontend server
-- `npm run install-all` - Install dependencies for root, server, and client
 
 ### 3. Create Uploads Directory
 

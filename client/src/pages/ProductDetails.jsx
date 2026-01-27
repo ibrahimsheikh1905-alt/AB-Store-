@@ -143,7 +143,7 @@ const ProductDetails = () => {
                   alt={product.name}
                   className="relative z-10 h-full w-full object-cover transition duration-700 ease-out"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/800x800?text=No+Image';
+                    e.target.src = '/no-image.png';
                   }}
                 />
                 <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/35 via-transparent to-transparent" />

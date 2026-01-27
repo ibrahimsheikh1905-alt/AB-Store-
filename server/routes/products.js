@@ -1,81 +1,21 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Conditionally import Cloudinary only in production
-let cloudinary, streamifier;
-if (process.env.NODE_ENV === 'production') {
-  try {
-    const cloudinaryModule = await import('cloudinary');
-    const streamifierModule = await import('streamifier');
-    cloudinary = cloudinaryModule.v2;
-    streamifier = streamifierModule.default;
-
-    // Configure Cloudinary
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-  } catch (error) {
-    console.warn('Cloudinary not available, falling back to local storage');
-  }
-}
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
+// ------------------- CLOUDINARY SETUP -------------------
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ------------------- MULTER SETUP -------------------
-let storage, upload;
-
-if (process.env.NODE_ENV === 'production' && cloudinary) {
-  // Use memory storage for Cloudinary in production
-  storage = multer.memoryStorage();
-  upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-      const filetypes = /jpeg|jpg|png|gif|webp/;
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = filetypes.test(file.mimetype);
-
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed'));
-      }
-    }
-  });
-} else {
-  // Use disk storage for local development
-  storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '../uploads/'));
-    },
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
-    }
-  });
-
-  upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-      const filetypes = /jpeg|jpg|png|gif|webp/;
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = filetypes.test(file.mimetype);
-
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed'));
-      }
-    }
-  });
-}
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // ------------------- GET ALL PRODUCTS -------------------
 router.get('/', async (req, res) => {
@@ -116,41 +56,33 @@ router.post('/', upload.array('images', 5), async (req, res) => {
     const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
     // ------------------- HANDLE IMAGE UPLOAD -------------------
-    let images = [];
-
+    let imageUrls = [];
     if (req.files && req.files.length > 0) {
-      if (process.env.NODE_ENV === 'production' && cloudinary) {
-        // Upload to Cloudinary in production
-        for (const file of req.files) {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-              { folder: 'products' },
-              (error, result) => {
-                if (result) resolve(result);
-                else reject(error);
-              }
-            );
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          });
-          images.push(uploadResult.secure_url);
-        }
-      } else {
-        // Use local storage in development
-        const baseUrl = 'http://localhost:5000';
-        images = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
+      for (const file of req.files) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'products' },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+        imageUrls.push(uploadResult.secure_url);
       }
     }
 
     const product = new Product({
       name,
       description,
-      price: parseFloat(price),
-      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+      price,
+      originalPrice,
       category,
-      inStock: inStock === 'true' || inStock === true,
-      stockQuantity: parseInt(stockQuantity) || 0,
-      featured: featured === 'true' || featured === true,
-      images, // save uploaded images
+      inStock,
+      stockQuantity,
+      featured,
+      images: imageUrls, // save uploaded images
     });
 
     const savedProduct = await product.save();
@@ -170,37 +102,30 @@ router.put('/:id', upload.array('images', 5), async (req, res) => {
 
     product.name = name || product.name;
     product.description = description || product.description;
-    product.price = price ? parseFloat(price) : product.price;
-    product.originalPrice = originalPrice ? parseFloat(originalPrice) : product.originalPrice;
+    product.price = price || product.price;
+    product.originalPrice = originalPrice || product.originalPrice;
     product.category = category || product.category;
-    product.inStock = inStock !== undefined ? (inStock === 'true' || inStock === true) : product.inStock;
-    product.stockQuantity = stockQuantity ? parseInt(stockQuantity) : product.stockQuantity;
-    product.featured = featured !== undefined ? (featured === 'true' || featured === true) : product.featured;
+    product.inStock = inStock !== undefined ? inStock : product.inStock;
+    product.stockQuantity = stockQuantity || product.stockQuantity;
+    product.featured = featured !== undefined ? featured : product.featured;
 
     // ------------------- UPDATE IMAGES IF NEW FILES -------------------
     if (req.files && req.files.length > 0) {
-      if (process.env.NODE_ENV === 'production' && cloudinary) {
-        // Upload to Cloudinary in production
-        for (const file of req.files) {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-              { folder: 'products' },
-              (error, result) => {
-                if (result) resolve(result);
-                else reject(error);
-              }
-            );
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          });
-          product.images.push(uploadResult.secure_url);
-        }
-      } else {
-        // Use local storage in development
-        const baseUrl = 'http://localhost:5000';
-        const newImages = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
-        // Append new images to keep existing ones unless explicitly replaced
-        product.images = [...product.images, ...newImages];
+      let imageUrls = [];
+      for (const file of req.files) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'products' },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+        imageUrls.push(uploadResult.secure_url);
       }
+      product.images = imageUrls;
     }
 
     const updatedProduct = await product.save();

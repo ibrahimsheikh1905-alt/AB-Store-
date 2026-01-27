@@ -95,7 +95,7 @@ const Home = () => {
             alt={product.name}
             className="w-full h-64 object-cover transition duration-500 group-hover:scale-105"
             onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/500x500?text=No+Image';
+              e.target.src = '/no-image.png';
             }}
           />
         </div>
@@ -315,7 +315,7 @@ const Home = () => {
                       alt={menProducts[0].name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 drop-shadow-[0_25px_60px_rgba(0,0,0,0.4)]"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/600x600?text=No+Image';
+                        e.target.src = '/no-image.png';
                       }}
                     />
                   </div>
@@ -349,7 +349,7 @@ const Home = () => {
                     alt={signatureProduct.name}
                     className="relative z-10 w-full max-w-[540px] object-contain drop-shadow-[0_25px_60px_rgba(0,0,0,0.45)]"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/650x650?text=No+Image';
+                      e.target.src = '/no-image.png';
                     }}
                   />
                 </div>
@@ -418,7 +418,7 @@ const Home = () => {
                       alt={kidsProducts[0].name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 shadow-2xl"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/600x600?text=No+Image';
+                        e.target.src = '/no-image.png';
                       }}
                     />
                   )}

@@ -2,89 +2,46 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import { protect, admin } from '../middleware/auth.js';
-
-// Conditionally import Cloudinary only in production
-let cloudinary, streamifier;
-if (process.env.NODE_ENV === 'production') {
-  try {
-    const cloudinaryModule = await import('cloudinary');
-    const streamifierModule = await import('streamifier');
-    cloudinary = cloudinaryModule.v2;
-    streamifier = streamifierModule.default;
-
-    // Configure Cloudinary
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-  } catch (error) {
-    console.warn('Cloudinary not available, falling back to local storage');
-  }
-}
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure multer based on environment
-let storage, upload;
+// ✅ Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-if (process.env.NODE_ENV === 'production' && cloudinary) {
-  // Use memory storage for Cloudinary in production
-  storage = multer.memoryStorage();
-  upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-      const filetypes = /jpeg|jpg|png|gif|webp/;
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = filetypes.test(file.mimetype);
+// ✅ Multer memory storage
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif|webp/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  }
+});
 
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed'));
-      }
-    }
-  });
-} else {
-  // Use disk storage for local development
-  storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '../uploads/'));
-    },
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
-    }
-  });
-
-  upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-      const filetypes = /jpeg|jpg|png|gif|webp/;
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = filetypes.test(file.mimetype);
-
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed'));
-      }
-    }
-  });
-}
-
-// All admin routes require authentication and admin role
+// ✅ Admin middleware
 router.use(protect, admin);
 
-// @route   GET /api/admin/products
-// @desc    Get all products (admin)
-// @access  Private/Admin
+
+
+// ======================= PRODUCTS =======================
+
+// ✅ GET all products
 router.get('/products', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -94,36 +51,31 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// @route   POST /api/admin/products
-// @desc    Create new product
-// @access  Private/Admin
+
+// ✅ CREATE PRODUCT (image required)
 router.post('/products', upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
-    let images = [];
+    // ❗ Real store rule: image required
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "Product image is required" });
+    }
 
-    if (req.files && req.files.length > 0) {
-      if (process.env.NODE_ENV === 'production' && cloudinary) {
-        // Upload to Cloudinary in production
-        for (const file of req.files) {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-              { folder: 'products' },
-              (error, result) => {
-                if (result) resolve(result);
-                else reject(error);
-              }
-            );
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          });
-          images.push(uploadResult.secure_url);
-        }
-      } else {
-        // Use local storage in development
-        const baseUrl = 'http://localhost:5000';
-        images = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
-      }
+    let imageUrls = [];
+
+    for (const file of req.files) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+      imageUrls.push(uploadResult.secure_url);
     }
 
     const product = new Product({
@@ -131,55 +83,48 @@ router.post('/products', upload.array('images', 5), async (req, res) => {
       description,
       price: parseFloat(price),
       originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
-      images,
+      images: imageUrls, // ✅ no dummy image
       category,
       inStock: inStock === 'true' || inStock === true,
       stockQuantity: parseInt(stockQuantity) || 0,
-      featured: featured === 'true' || featured === true
+      featured: featured === 'true' || featured === true,
     });
 
     const createdProduct = await product.save();
     res.status(201).json(createdProduct);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// @route   PUT /api/admin/products/:id
-// @desc    Update product
-// @access  Private/Admin
+
+// ✅ UPDATE PRODUCT (replace images, not push)
 router.put('/products/:id', upload.array('images', 5), async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
     const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
     let images = product.images;
+
+    // ✅ if new images uploaded → replace old ones
     if (req.files && req.files.length > 0) {
-      if (process.env.NODE_ENV === 'production' && cloudinary) {
-        // Upload to Cloudinary in production
-        for (const file of req.files) {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-              { folder: 'products' },
-              (error, result) => {
-                if (result) resolve(result);
-                else reject(error);
-              }
-            );
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          });
-          images.push(uploadResult.secure_url);
-        }
-      } else {
-        // Use local storage in development
-        const baseUrl = 'http://localhost:5000';
-        const newImages = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
-        // Append new images to keep existing ones unless explicitly replaced
-        images = [...images, ...newImages];
+      images = [];
+
+      for (const file of req.files) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'products' },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+        images.push(uploadResult.secure_url);
       }
     }
 
@@ -195,31 +140,32 @@ router.put('/products/:id', upload.array('images', 5), async (req, res) => {
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// @route   DELETE /api/admin/products/:id
-// @desc    Delete product
-// @access  Private/Admin
+
+// ✅ DELETE PRODUCT
 router.delete('/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
     await Product.deleteOne({ _id: req.params.id });
     res.json({ message: 'Product removed' });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// @route   GET /api/admin/orders
-// @desc    Get all orders
-// @access  Private/Admin
+
+
+// ======================= ORDERS =======================
+
+// GET all orders
 router.get('/orders', async (req, res) => {
   try {
     const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
@@ -229,15 +175,11 @@ router.get('/orders', async (req, res) => {
   }
 });
 
-// @route   PUT /api/admin/orders/:id/pay
-// @desc    Update order to paid
-// @access  Private/Admin
+// Update order to paid
 router.put('/orders/:id/pay', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.isPaid = true;
     order.paidAt = Date.now();
@@ -249,15 +191,11 @@ router.put('/orders/:id/pay', async (req, res) => {
   }
 });
 
-// @route   PUT /api/admin/orders/:id/deliver
-// @desc    Update order to delivered
-// @access  Private/Admin
+// Update order to delivered
 router.put('/orders/:id/deliver', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
     if (!order.isPaid) {
       return res.status(400).json({ message: 'Order must be paid before delivery' });

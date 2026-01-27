@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminAPI, getImageUrl } from '../utils/api';
+import { adminAPI, getImageUrl, uploadAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatPrice } from '../utils/currency';
@@ -25,6 +25,7 @@ const AdminProducts = () => {
     stockQuantity: '',
     featured: false,
     images: null,
+    imageUrl: '',
   });
 
   useEffect(() => {
@@ -71,25 +72,28 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (key !== 'images') {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      if (formData.images) {
-        Array.from(formData.images).forEach((file) => {
-          formDataToSend.append('images', file);
+      let imageUrls = [];
+      // Upload selected files to Cloudinary
+      if (formData.images && formData.images.length > 0) {
+        const uploadPromises = Array.from(formData.images).map(async (file) => {
+          const res = await uploadAPI.uploadImage(file);
+          return res.data.url;
         });
+        imageUrls = await Promise.all(uploadPromises);
       }
-
+      // If imageUrl is provided, add it to the list
+      if (formData.imageUrl && formData.imageUrl.trim() !== '') {
+        imageUrls.push(formData.imageUrl.trim());
+      }
+      // Prepare product data with Cloudinary URLs only
+      const productData = { ...formData, images: imageUrls };
+      delete productData.images; // Remove the FileList
+      delete productData.imageUrl;
       if (editingProduct) {
-        await adminAPI.updateProduct(editingProduct._id, formDataToSend);
+        await adminAPI.updateProduct(editingProduct._id, productData);
       } else {
-        await adminAPI.createProduct(formDataToSend);
+        await adminAPI.createProduct(productData);
       }
-
       setShowModal(false);
       setEditingProduct(null);
       setFormData({
@@ -102,6 +106,7 @@ const AdminProducts = () => {
         stockQuantity: '',
         featured: false,
         images: null,
+        imageUrl: '',
       });
       setFilePreviews([]);
       fetchProducts();
@@ -120,9 +125,10 @@ const AdminProducts = () => {
       originalPrice: product.originalPrice || '',
       category: product.category,
       inStock: product.inStock,
-      stockQuantity: product.stockQuantity,
+      stockQuantity: product.stockQuantity || '',
       featured: product.featured,
       images: null,
+      imageUrl: '', // Reset imageUrl on edit
     });
     setFilePreviews([]);
     setShowModal(true);
@@ -355,6 +361,19 @@ const AdminProducts = () => {
                     accept="image/*"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Or paste Cloudinary Image URL
+                    </label>
+                    <input
+                      type="text"
+                      name="imageUrl"
+                      value={formData.imageUrl || ''}
+                      onChange={handleInputChange}
+                      placeholder="https://res.cloudinary.com/..."
+                      className="w-full px-3 py-1 border border-gray-300 rounded"
+                    />
+                  </div>
                   {editingProduct?.images?.length > 0 && (
                     <div className="mt-3">
                       <p className="text-xs font-semibold text-gray-600 mb-2">Current images</p>

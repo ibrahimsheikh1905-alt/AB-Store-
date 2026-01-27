@@ -59,7 +59,7 @@ const Cart = () => {
                     alt={item.name}
                     className="w-24 h-24 object-cover rounded"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                      e.target.src = '/no-image.png';
                     }}
                   />
                   <div className="flex-grow">

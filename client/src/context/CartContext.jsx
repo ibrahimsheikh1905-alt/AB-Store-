@@ -44,7 +44,7 @@ export const CartProvider = ({ children }) => {
           price: product.price,
           image: product.images && product.images[0] 
             ? (product.images[0].startsWith('http') ? product.images[0] : `${import.meta.env.VITE_API_URL}${product.images[0]}`)
-            : 'https://via.placeholder.com/400x400?text=No+Image',
+            : '/no-image.png',
           quantity,
         },
       ];

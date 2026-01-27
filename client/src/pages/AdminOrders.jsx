@@ -106,7 +106,7 @@ const AdminOrders = () => {
                         alt={item.name}
                         className="w-12 h-12 object-cover rounded"
                         onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                          e.target.src = '/no-image.png';
                         }}
                       />
                       <div>

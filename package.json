@@ -4,8 +4,7 @@
   "description": "Full-stack e-commerce application clone",
   "main": "index.js",
   "scripts": {
-    "dev": "node start-servers.js",
-    "dev:concurrent": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install"
@@ -24,6 +23,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
+    "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2"
   }

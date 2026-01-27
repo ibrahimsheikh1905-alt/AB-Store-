@@ -47,7 +47,7 @@ const BASE_URL =
     : "https://ab-store-1.onrender.com";
 
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return "https://via.placeholder.com/150";
+  if (!imagePath) return "/no-image.png"; // Use a local fallback image
   if (imagePath.startsWith("http")) return imagePath;
   return `${BASE_URL}${imagePath}`;
 };
@@ -105,6 +105,17 @@ export const reviewsAPI = {
   check: (productId) => api.get(`/reviews/check/${productId}`),
   update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
+};
+
+// Cloudinary Upload API
+export const uploadAPI = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export default api;
