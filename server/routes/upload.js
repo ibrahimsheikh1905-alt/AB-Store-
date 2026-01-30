@@ -1,19 +1,37 @@
 import express from 'express';
 import multer from 'multer';
 import cloudinary from '../utils/cloudinary.js';
-import fs from 'fs';
+import streamifier from 'streamifier';
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' }); // Temporary storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 router.post('/image', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image file provided' });
+  }
+
   try {
-    const result = await cloudinary.uploader.upload(req.file.path);
-    // Remove file from local uploads after upload
-    fs.unlinkSync(req.file.path);
-    res.json({ url: result.secure_url });
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'uploads' },
+      (error, result) => {
+        if (error) {
+          return res.status(500).json({
+            error: 'Cloudinary upload failed',
+            details: error.message,
+          });
+        }
+        res.json({ url: result.secure_url });
+      }
+    );
+
+    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
   } catch (err) {
-    res.status(500).json({ error: 'Cloudinary upload failed', details: err.message });
+    res.status(500).json({
+      error: 'An unexpected error occurred',
+      details: err.message,
+    });
   }
 });
 

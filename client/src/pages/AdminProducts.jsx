@@ -87,7 +87,6 @@ const AdminProducts = () => {
       }
       // Prepare product data with Cloudinary URLs only
       const productData = { ...formData, images: imageUrls };
-      delete productData.images; // Remove the FileList
       delete productData.imageUrl;
       if (editingProduct) {
         await adminAPI.updateProduct(editingProduct._id, productData);

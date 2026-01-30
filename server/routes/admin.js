@@ -6,19 +6,8 @@ import { fileURLToPath } from 'url';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import { protect, admin } from '../middleware/auth.js';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../utils/cloudinary.js';
 import streamifier from 'streamifier';
-
-const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ✅ Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 // ✅ Multer memory storage
 const storage = multer.memoryStorage();
@@ -52,87 +41,45 @@ router.get('/products', async (req, res) => {
 });
 
 
-// ✅ CREATE PRODUCT (image required)
-router.post('/products', upload.array('images', 5), async (req, res) => {
+// ✅ CREATE PRODUCT (accepts image URLs array from frontend)
+router.post('/products', async (req, res) => {
   try {
-    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
-
-    // ❗ Real store rule: image required
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Product image is required" });
+    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured, images } = req.body;
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ message: "Product image is required (Cloudinary URL)" });
     }
-
-    let imageUrls = [];
-
-    for (const file of req.files) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: 'products' },
-          (error, result) => {
-            if (result) resolve(result);
-            else reject(error);
-          }
-        );
-        streamifier.createReadStream(file.buffer).pipe(stream);
-      });
-      imageUrls.push(uploadResult.secure_url);
-    }
-
     const product = new Product({
       name,
       description,
       price: parseFloat(price),
       originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
-      images: imageUrls, // ✅ no dummy image
+      images, // Array of Cloudinary URLs
       category,
       inStock: inStock === 'true' || inStock === true,
       stockQuantity: parseInt(stockQuantity) || 0,
       featured: featured === 'true' || featured === true,
     });
-
     const createdProduct = await product.save();
     res.status(201).json(createdProduct);
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 
-// ✅ UPDATE PRODUCT (replace images, not push)
-router.put('/products/:id', upload.array('images', 5), async (req, res) => {
+// ✅ UPDATE PRODUCT (accepts image URLs array from frontend)
+router.put('/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
-
-    let images = product.images;
-
-    // ✅ if new images uploaded → replace old ones
-    if (req.files && req.files.length > 0) {
-      images = [];
-
-      for (const file of req.files) {
-        const uploadResult = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            { folder: 'products' },
-            (error, result) => {
-              if (result) resolve(result);
-              else reject(error);
-            }
-          );
-          streamifier.createReadStream(file.buffer).pipe(stream);
-        });
-        images.push(uploadResult.secure_url);
-      }
-    }
+    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured, images } = req.body;
 
     product.name = name || product.name;
     product.description = description || product.description;
     product.price = price ? parseFloat(price) : product.price;
     product.originalPrice = originalPrice ? parseFloat(originalPrice) : product.originalPrice;
-    product.images = images;
+    product.images = images || product.images; // Update images if provided
     product.category = category || product.category;
     product.inStock = inStock !== undefined ? (inStock === 'true' || inStock === true) : product.inStock;
     product.stockQuantity = stockQuantity ? parseInt(stockQuantity) : product.stockQuantity;
