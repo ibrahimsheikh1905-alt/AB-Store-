@@ -80,8 +80,12 @@ export const couponsAPI = {
 // Admin API
 export const adminAPI = {
   getProducts: () => api.get('/admin/products'),
-  createProduct: (productData) => api.post('/admin/products', productData),
-  updateProduct: (id, productData) => api.put(`/admin/products/${id}`, productData),
+  createProduct: (productData) => api.post('/admin/products', productData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  updateProduct: (id, productData) => api.put(`/admin/products/${id}`, productData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   deleteProduct: (id) => api.delete(`/admin/products/${id}`),
   getOrders: () => api.get('/admin/orders'),
   updateOrderPayment: (id) => api.put(`/admin/orders/${id}/pay`),

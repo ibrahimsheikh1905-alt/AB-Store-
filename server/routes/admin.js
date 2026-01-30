@@ -41,19 +41,34 @@ router.get('/products', async (req, res) => {
 });
 
 
-// ✅ CREATE PRODUCT (accepts image URLs array from frontend)
-router.post('/products', async (req, res) => {
+// ✅ CREATE PRODUCT (accepts image uploads)
+router.post('/products', upload.array('images', 5), async (req, res) => {
   try {
-    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured, images } = req.body;
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ message: "Product image is required (Cloudinary URL)" });
+    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
+
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'products' },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+        imageUrls.push(uploadResult.secure_url);
+      }
     }
+
     const product = new Product({
       name,
       description,
       price: parseFloat(price),
       originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
-      images, // Array of Cloudinary URLs
+      images: imageUrls, // Array of Cloudinary URLs
       category,
       inStock: inStock === 'true' || inStock === true,
       stockQuantity: parseInt(stockQuantity) || 0,
@@ -67,19 +82,37 @@ router.post('/products', async (req, res) => {
 });
 
 
-// ✅ UPDATE PRODUCT (accepts image URLs array from frontend)
-router.put('/products/:id', async (req, res) => {
+// ✅ UPDATE PRODUCT (accepts image uploads)
+router.put('/products/:id', upload.array('images', 5), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured, images } = req.body;
+    const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
+
+    let images = product.images;
+    if (req.files && req.files.length > 0) {
+      images = [];
+      for (const file of req.files) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'products' },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+        images.push(uploadResult.secure_url);
+      }
+    }
 
     product.name = name || product.name;
     product.description = description || product.description;
     product.price = price ? parseFloat(price) : product.price;
     product.originalPrice = originalPrice ? parseFloat(originalPrice) : product.originalPrice;
-    product.images = images || product.images; // Update images if provided
+    product.images = images;
     product.category = category || product.category;
     product.inStock = inStock !== undefined ? (inStock === 'true' || inStock === true) : product.inStock;
     product.stockQuantity = stockQuantity ? parseInt(stockQuantity) : product.stockQuantity;

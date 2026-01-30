@@ -72,22 +72,17 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let imageUrls = [];
-      // Upload selected files to Cloudinary
-      if (formData.images && formData.images.length > 0) {
-        const uploadPromises = Array.from(formData.images).map(async (file) => {
-          const res = await uploadAPI.uploadImage(file);
-          return res.data.url;
-        });
-        imageUrls = await Promise.all(uploadPromises);
+      const productData = new FormData();
+      for (const key in formData) {
+        if (key === 'images' && formData.images) {
+          for (let i = 0; i < formData.images.length; i++) {
+            productData.append('images', formData.images[i]);
+          }
+        } else {
+          productData.append(key, formData[key]);
+        }
       }
-      // If imageUrl is provided, add it to the list
-      if (formData.imageUrl && formData.imageUrl.trim() !== '') {
-        imageUrls.push(formData.imageUrl.trim());
-      }
-      // Prepare product data with Cloudinary URLs only
-      const productData = { ...formData, images: imageUrls };
-      delete productData.imageUrl;
+
       if (editingProduct) {
         await adminAPI.updateProduct(editingProduct._id, productData);
       } else {
