@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://ab-store-1.onrender.com/api';
+const API_URL = '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -29,22 +29,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 errors silently - don't show error messages for auth failures
+    // Disabled auto-clear - let AuthContext handle
+    /*
     if (error.response?.status === 401) {
-      // Only clear token if it exists (user was logged in)
       const token = localStorage.getItem('token');
       if (token) {
         localStorage.removeItem('token');
-        // Don't redirect automatically, let components handle it
       }
     }
+    */
     return Promise.reject(error);
   }
 );
 
-const BASE_URL =
-  import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace("/api", "")
-    : "https://ab-store-1.onrender.com";
+
+const BASE_URL = '';
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "/no-image.png"; // Use a local fallback image
@@ -68,7 +67,7 @@ export const productsAPI = {
 // Orders API
 export const ordersAPI = {
   create: (orderData) => api.post('/orders', orderData),
-  getMyOrders: () => api.get('/orders/myorders'),
+  getMyOrders: () => api.get('/orders/mine'),
   getById: (id) => api.get(`/orders/${id}`),
 };
 
@@ -90,7 +89,7 @@ export const adminAPI = {
   getOrders: () => api.get('/admin/orders'),
   updateOrderPayment: (id) => api.put(`/admin/orders/${id}/pay`),
   updateOrderDelivery: (id) => api.put(`/admin/orders/${id}/deliver`),
-  getCoupons: () => api.get('/coupons'),
+  getCoupons: () => api.get('/coupons/admin'),
   createCoupon: (couponData) => api.post('/coupons', couponData),
   updateCoupon: (id, couponData) => api.put(`/coupons/${id}`, couponData),
   deleteCoupon: (id) => api.delete(`/coupons/${id}`),
@@ -98,13 +97,20 @@ export const adminAPI = {
 
 // Reviews API
 export const reviewsAPI = {
-  create: (reviewData) => api.post('/reviews', reviewData),
+  create: (productId, reviewData) => api.post(`/reviews/${productId}`, reviewData),
   getByProduct: (productId) => api.get(`/reviews/product/${productId}`),
-  getUserReviews: () => api.get('/reviews/user'),
+  getUserReviews: () => api.get('/reviews'),
   getAll: () => api.get('/reviews/admin'),
   check: (productId) => api.get(`/reviews/check/${productId}`),
   update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
+};
+
+// Banners API
+export const bannersAPI = {
+  getAll: () => api.get('/banners'),
+  create: (bannerData) => api.post('/banners', bannerData),
+  delete: (id) => api.delete(`/banners/${id}`),
 };
 
 // Cloudinary Upload API

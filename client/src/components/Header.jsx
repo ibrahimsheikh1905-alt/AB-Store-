@@ -85,7 +85,7 @@ const Header = () => {
             <div className="lg:hidden bg-black border-t border-gray-800">
             <nav className="flex flex-col px-4 py-4 space-y-4">
             <Link to="/" className="font-bold uppercase">Home</Link>
-            <Link to="/collections" className="font-bold uppercase">Collection</Link>
+            <Link to="/category" className="font-bold uppercase">Category</Link>
             <Link to="/products" className="font-bold uppercase">All Products</Link>
             </nav>
             </div>
@@ -112,8 +112,8 @@ const Header = () => {
                 <Link to="/" className="text-sm font-bold uppercase tracking-wider text-white hover:text-orange-500 transition">
                   HOME
                 </Link>
-                <Link to="/collections" className="text-sm font-bold uppercase tracking-wider text-white hover:text-orange-500 transition">
-                  COLLECTION
+                <Link to="/category" className="text-sm font-bold uppercase tracking-wider text-white hover:text-orange-500 transition">
+                  CATEGORY
                 </Link>
                 <Link to="/products" className="text-sm font-bold uppercase tracking-wider text-white hover:text-orange-500 transition">
                   ALL PRODUCTS

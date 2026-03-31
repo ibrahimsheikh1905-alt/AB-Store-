@@ -10,18 +10,15 @@ const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     fullName: '',
     address: '',
     city: '',
     postalCode: '',
     country: '',
-    paymentMethod: 'card',
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
+    paymentMethod: 'cash',
   });
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -44,53 +41,21 @@ const Checkout = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleCardNumberChange = (e) => {
-    let value = e.target.value.replace(/\s/g, '');
-    if (value.length > 0) {
-      value = value.match(/.{1,4}/g)?.join(' ') || value;
-    }
-    setFormData({ ...formData, cardNumber: value });
-  };
 
-  const handleExpiryChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-      value = value.substring(0, 2) + '/' + value.substring(2, 4);
-    }
-    setFormData({ ...formData, expiryDate: value });
-  };
-
-  const handleCvvChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    setFormData({ ...formData, cvv: value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    // Validate card details if card payment is selected
-    if (formData.paymentMethod === 'card') {
-      if (!formData.cardNumber || !formData.cardName || !formData.expiryDate || !formData.cvv) {
-        setError('Please fill in all card details');
-        setLoading(false);
-        return;
-      }
-      // Basic card number validation (should be 16 digits)
-      const cardNumberDigits = formData.cardNumber.replace(/\s/g, '');
-      if (cardNumberDigits.length < 16) {
-        setError('Please enter a valid 16-digit card number');
-        setLoading(false);
-        return;
-      }
-    }
+
 
     try {
       const subtotal = getCartTotal();
-      const shipping = subtotal > 28000 ? 0 : 2800; // Free shipping over 28,000 PKR, otherwise 2,800 PKR
+      const shipping = 300;
       const discount = couponResult?.discount || 0;
       const total = Math.max(subtotal - discount + shipping, 0);
+
 
       const orderItems = cartItems.map((item) => ({
         product: item._id,
@@ -128,10 +93,11 @@ const Checkout = () => {
     }
   };
 
-  const subtotal = getCartTotal();
-  const shipping = subtotal > 28000 ? 0 : 2800; // Free shipping over 28,000 PKR, otherwise 2,800 PKR
-  const discount = couponResult?.discount || 0;
-  const total = Math.max(subtotal - discount + shipping, 0);
+      const subtotal = getCartTotal();
+      const shipping = 300;
+      const discount = couponResult?.discount || 0;
+      const total = Math.max(subtotal - discount + shipping, 0);
+
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -250,28 +216,6 @@ const Checkout = () => {
                   <input
                     type="radio"
                     name="paymentMethod"
-                    value="card"
-                    checked={formData.paymentMethod === 'card'}
-                    onChange={handleChange}
-                    className="text-primary-600"
-                  />
-                  <span>Credit/Debit Card</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="paypal"
-                    checked={formData.paymentMethod === 'paypal'}
-                    onChange={handleChange}
-                    className="text-primary-600"
-                  />
-                  <span>PayPal</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
                     value="cash"
                     checked={formData.paymentMethod === 'cash'}
                     onChange={handleChange}
@@ -279,84 +223,10 @@ const Checkout = () => {
                   />
                   <span>Cash on Delivery</span>
                 </label>
+
               </div>
 
-              {/* Card Details Form - Show only when card is selected */}
-              {formData.paymentMethod === 'card' && (
-                <div className="bg-gray-50 p-4 rounded-lg space-y-4 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Card Details</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      name="cardNumber"
-                      value={formData.cardNumber}
-                      onChange={handleCardNumberChange}
-                      placeholder="1234 5678 9012 3456"
-                      maxLength="19"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cardholder Name
-                    </label>
-                    <input
-                      type="text"
-                      name="cardName"
-                      value={formData.cardName}
-                      onChange={handleChange}
-                      placeholder="John Doe"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        name="expiryDate"
-                        value={formData.expiryDate}
-                        onChange={handleExpiryChange}
-                        placeholder="MM/YY"
-                        maxLength="5"
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        CVV
-                      </label>
-                      <input
-                        type="text"
-                        name="cvv"
-                        value={formData.cvv}
-                        onChange={handleCvvChange}
-                        placeholder="123"
-                        maxLength="4"
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {/* PayPal Info - Show only when PayPal is selected */}
-              {formData.paymentMethod === 'paypal' && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    You will be redirected to PayPal to complete your payment after placing the order.
-                  </p>
-                </div>
-              )}
 
               {/* Cash on Delivery Info */}
               {formData.paymentMethod === 'cash' && (
@@ -366,6 +236,7 @@ const Checkout = () => {
                   </p>
                 </div>
               )}
+
             </div>
 
             {error && (

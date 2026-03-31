@@ -1,62 +1,66 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { productsAPI, getImageUrl } from '../utils/api';
+import { productsAPI, bannersAPI, getImageUrl } from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import { formatPrice } from '../utils/currency';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
-  const [menProducts, setMenProducts] = useState([]);
-  const [kidsProducts, setKidsProducts] = useState([]);
+
+  const [featuredGenderProduct, setFeaturedGenderProduct] = useState(null);
   const [signatureProduct, setSignatureProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [heroBanners, setHeroBanners] = useState([]);
   
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchHomeData = async () => {
       try {
-        const response = await productsAPI.getAll();
-        const allProducts = response.data;
-        
+        const [productsResponse, bannersResponse] = await Promise.all([
+          productsAPI.getAll(),
+          bannersAPI.getAll()
+        ]);
+
+        const allProducts = productsResponse.data.products || productsResponse.data || [];
+        const allBanners = bannersResponse.data || [];
+
         // Featured products (first 12)
         setFeaturedProducts(allProducts.slice(0, 12));
-        
+
         // Trending products (first 4)
         setTrendingProducts(allProducts.slice(0, 4));
-        
-        // Men products
-        const men = allProducts.filter(p => 
-          p.category?.toLowerCase().includes('men') || 
-          p.category?.toLowerCase().includes('him') ||
-          p.category?.toLowerCase().includes('male')
-        );
-        setMenProducts(men.slice(0, 1));
-        
-        // Kids products
-        const kids = allProducts.filter(p => 
-          p.category?.toLowerCase().includes('kids') ||
-          p.category?.toLowerCase().includes('kid') ||
-          p.category?.toLowerCase().includes('children')
-        );
-        setKidsProducts(kids.slice(0, 1));
-        
+
+        // Get first Men/Women product for dynamic section
+        let featuredGenderProduct = null;
+        const men = allProducts.filter(p => p.category === 'Men');
+        const women = allProducts.filter(p => p.category === 'Women');
+        if (men.length > 0) {
+          featuredGenderProduct = men[0];
+        } else if (women.length > 0) {
+          featuredGenderProduct = women[0];
+        }
+        setFeaturedGenderProduct(featuredGenderProduct);
+
         // Signature product (first featured or first product)
         setSignatureProduct(allProducts.find(p => p.featured) || allProducts[0]);
+
+        // Hero banners for Men/Women/Kids
+        setHeroBanners(allBanners);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching home data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchHomeData();
   }, []);
 
   const categories = [
-    { name: 'FOR HER', icon: '♀', link: '/products?category=Women', color: 'from-pink-100 to-rose-100' },
-    { name: 'FOR HIM', icon: '♂', link: '/products?category=Men', color: 'from-blue-100 to-indigo-100' },
-    { name: 'FOR KIDS', icon: '👼', link: '/products?category=Kids', color: 'from-orange-100 to-yellow-100' },
+    { name: 'Women', icon: '♀', link: '/category/women', color: 'from-pink-100 to-rose-100' },
+    { name: 'Men', icon: '♂', link: '/category/men', color: 'from-blue-100 to-indigo-100' },
+    { name: 'Kids', icon: '👶', link: '/category/kids', color: 'from-orange-100 to-yellow-100' },
   ];
 
   const TrendingCard = ({ product, index }) => {
@@ -200,6 +204,7 @@ const Home = () => {
         </div>
       </section>
 
+
       {/* Featured Watches */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
@@ -262,8 +267,8 @@ const Home = () => {
         </section>
       )}
 
-      {/* New Arrival For MEN */}
-      {menProducts.length > 0 && (
+      {/* Dynamic Gender Product Section (Men/Women) */}
+      {featuredGenderProduct && (
         <section className="py-20 bg-gradient-to-r from-[#0c0e14] via-[#0f121a] to-[#0b0d12] text-white relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute top-0 right-0 w-[520px] h-[520px] bg-orange-500/12 rounded-full blur-[150px]"></div>
@@ -276,30 +281,30 @@ const Home = () => {
                   New Arrival
                 </div>
                 <h2 className="text-5xl md:text-6xl font-black leading-tight">
-                  For<br /><span className="text-orange-500">Men</span>
+                  For<br /><span className="text-orange-500">{featuredGenderProduct.category}</span>
                 </h2>
                 <p className="text-gray-300 text-lg">
-                  {menProducts[0]?.description || 'Premium timepieces designed for the modern gentleman.'}
+                  {featuredGenderProduct?.description || 'Premium timepieces for modern style.'}
                 </p>
                 <div className="flex items-center gap-4">
                   <span className="text-4xl font-black text-orange-300">
-                    {formatPrice(menProducts[0]?.price || 0)}
+                    {formatPrice(featuredGenderProduct?.price || 0)}
                   </span>
-                  {menProducts[0]?.originalPrice && menProducts[0].originalPrice > menProducts[0].price && (
+                  {featuredGenderProduct?.originalPrice && featuredGenderProduct.originalPrice > featuredGenderProduct.price && (
                     <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 rounded-full px-3 py-1">
-                      Save {formatPrice(menProducts[0].originalPrice - menProducts[0].price)}
+                      Save {formatPrice(featuredGenderProduct.originalPrice - featuredGenderProduct.price)}
                     </span>
                   )}
                 </div>
                 <div className="flex gap-3">
                   <Link
-                    to={menProducts[0]?._id ? `/products/${menProducts[0]._id}` : '/products?category=Men'}
+                    to={featuredGenderProduct?._id ? `/products/${featuredGenderProduct._id}` : `/products?category=${featuredGenderProduct.category}`}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-10 py-4 text-lg font-bold text-white shadow-lg shadow-orange-500/40 transition hover:shadow-orange-500/60"
                   >
                     Shop now
                   </Link>
                   <Link
-                    to="/products?category=Men"
+                    to={`/products?category=${featuredGenderProduct.category}`}
                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-6 py-4 text-sm font-semibold text-gray-200 hover:bg-white/5 transition"
                   >
                     Explore all
@@ -307,12 +312,12 @@ const Home = () => {
                 </div>
               </div>
               <div className="relative">
-                {menProducts[0] && (
+                {featuredGenderProduct && (
                   <div className="relative group">
                     <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/25 to-orange-600/20 rounded-2xl blur-2xl opacity-60 group-hover:opacity-80 transition"></div>
                     <img
-                      src={getImageUrl(menProducts[0].images && menProducts[0].images[0])}
-                      alt={menProducts[0].name}
+                      src={getImageUrl(featuredGenderProduct.images && featuredGenderProduct.images[0])}
+                      alt={featuredGenderProduct.name}
                       className="w-full h-[500px] object-cover rounded-2xl relative z-10 drop-shadow-[0_25px_60px_rgba(0,0,0,0.4)]"
                       onError={(e) => {
                         e.target.src = '/no-image.png';
@@ -404,45 +409,8 @@ const Home = () => {
         </section>
       )}
 
-      {/* New Arrival For KIDS */}
-      {kidsProducts.length > 0 && (
-        <section className="py-20 bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 text-gray-900 relative overflow-hidden">
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="order-2 lg:order-1">
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl blur-2xl opacity-50 group-hover:opacity-75 transition"></div>
-                  {kidsProducts[0] && (
-                    <img
-                      src={getImageUrl(kidsProducts[0].images && kidsProducts[0].images[0])}
-                      alt={kidsProducts[0].name}
-                      className="w-full h-[500px] object-cover rounded-2xl relative z-10 shadow-2xl"
-                      onError={(e) => {
-                        e.target.src = '/no-image.png';
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="mb-8">
-                  <span className="text-sm font-bold text-orange-600 tracking-widest uppercase bg-orange-100 px-4 py-2 rounded-full inline-block mb-4">NEW ARRIVAL</span>
-                  <h2 className="text-5xl md:text-6xl font-black mt-4 leading-tight">
-                    For<br /><span className="text-orange-600">KIDS</span>
-                  </h2>
-                  <p className="text-gray-600 mt-4 text-lg">Fun, colorful, and durable watches for young adventurers</p>
-                </div>
-                <Link
-                  to="/products?category=Kids"
-                  className="inline-block bg-orange-500 hover:bg-orange-600 text-white px-10 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 shadow-2xl"
-                >
-                  SHOP NOW!
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+
+
 
       {/* Shop by Collection */}
       <section id="collections" className="py-24 bg-gradient-to-b from-white to-gray-50">

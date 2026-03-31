@@ -29,7 +29,7 @@ const Products = () => {
         if (filters.search) params.search = filters.search;
 
         const response = await productsAPI.getAll(params);
-        setProducts(response.data);
+        setProducts(response.data.products || response.data || []);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {

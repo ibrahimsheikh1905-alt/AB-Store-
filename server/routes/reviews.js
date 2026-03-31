@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Review from '../models/Review.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
@@ -6,64 +7,18 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Helper function to calculate and update product rating
-const updateProductRating = async (productId) => {
+const checkReviewEligibility = async (req, res) => {
   try {
-    const reviews = await Review.find({ product: productId });
-    if (reviews.length === 0) {
-      await Product.findByIdAndUpdate(productId, {
-        $set: { rating: 0, numReviews: 0 }
-      });
-      return;
-    }
+    const { productId } = req.params;
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = totalRating / reviews.length;
-
-    await Product.findByIdAndUpdate(productId, {
-      $set: {
-        rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
-        numReviews: reviews.length
-      }
-    });
-  } catch (error) {
-    console.error('Error updating product rating:', error);
-  }
-};
-
-// @route   POST /api/reviews
-// @desc    Create a new review
-// @access  Private
-router.post('/', protect, async (req, res) => {
-  try {
-    const { productId, rating, comment } = req.body;
-
-    if (!productId || !rating) {
-      return res.status(400).json({ message: 'Product ID and rating are required' });
-    }
-
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
-    }
-
-    // Check if product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // Check if user has ordered this product
-    const hasOrdered = await Order.findOne({
+    // Check if user has purchased this product (paid order)
+    const order = await Order.findOne({
       user: req.user._id,
       'orderItems.product': productId,
-      isPaid: true // Only allow reviews for paid orders
+      isPaid: true
     });
 
-    if (!hasOrdered) {
-      return res.status(403).json({ 
-        message: 'You must purchase this product before you can review it' 
-      });
-    }
+    const hasOrder = !!order;
 
     // Check if user already reviewed this product
     const existingReview = await Review.findOne({
@@ -71,48 +26,109 @@ router.post('/', protect, async (req, res) => {
       user: req.user._id
     });
 
-    if (existingReview) {
+    const hasReviewed = !!existingReview;
+
+    res.json({
+      canReview: hasOrder && !hasReviewed,
+      hasReviewed
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Check if user can review product (has purchased but not reviewed)
+// @route   GET /api/reviews/check/:productId
+// @access  Private
+router.get('/check/:productId', protect, checkReviewEligibility);
+
+// @desc    Get user's reviews
+// @route   GET /api/reviews
+// @access  Private
+router.get('/', protect, async (req, res) => {
+  try {
+    const reviews = await Review.find({ user: req.user._id })
+      .populate('product', 'name images')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Get reviews for product
+// @route   GET /api/reviews/product/:productId
+// @access  Public
+router.get('/product/:productId', async (req, res) => {
+  try {
+    const reviews = await Review.find({ product: req.params.productId })
+      .populate('user', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Create or update review
+// @route   POST /api/reviews/:productId
+// @access  Private
+// @desc    Get all reviews for admin
+router.get('/admin', protect, async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate('product', 'name images')
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/:productId', protect, async (req, res) => {
+  try {
+
+    console.log('Review body:', req.body);
+    console.log('User:', req.user);
+    const { rating, comment } = req.body;
+
+
+    const review = await Review.findOne({
+      product: req.params.productId,
+      user: req.user._id
+    });
+
+    if (review) {
       // Update existing review
-      existingReview.rating = rating;
-      existingReview.comment = comment || '';
-      existingReview.updatedAt = Date.now();
-      await existingReview.save();
+      review.rating = rating;
+      review.comment = comment || review.comment;
+      review.updatedAt = Date.now();
+      await review.save();
 
       // Update product rating
-      await updateProductRating(productId);
-
-      const review = await Review.findById(existingReview._id)
-        .populate('user', 'name email')
-        .populate('product', 'name');
-
-      return res.json({
-        message: 'Review updated successfully',
-        review
+      await updateProductRating(req.params.productId);
+      res.json(review);
+    } else {
+      // Create new review
+      const newReview = new Review({
+        product: req.params.productId,
+        user: req.user._id,
+        userName: req.user.name,
+        rating,
+        comment
       });
+      await newReview.save();
+
+      // Update product rating
+      console.log('Updating product rating for:', req.params.productId);
+      await updateProductRating(req.params.productId);
+      res.status(201).json(newReview);
+
     }
-
-    // Create new review
-    const review = new Review({
-      product: productId,
-      user: req.user._id,
-      userName: req.user.name,
-      rating,
-      comment: comment || ''
-    });
-
-    await review.save();
-
-    // Update product rating
-    await updateProductRating(productId);
-
-    const populatedReview = await Review.findById(review._id)
-      .populate('user', 'name email')
-      .populate('product', 'name');
-
-    res.status(201).json({
-      message: 'Review created successfully',
-      review: populatedReview
-    });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ message: 'You have already reviewed this product' });
@@ -121,85 +137,8 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/reviews/product/:productId
-// @desc    Get all reviews for a product
-// @access  Public
-router.get('/product/:productId', async (req, res) => {
-  try {
-    const reviews = await Review.find({ product: req.params.productId })
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-
-    res.json(reviews);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   GET /api/reviews/user
-// @desc    Get all reviews by current user
-// @access  Private
-router.get('/user', protect, async (req, res) => {
-  try {
-    const reviews = await Review.find({ user: req.user._id })
-      .populate('product', 'name images price')
-      .sort({ createdAt: -1 });
-
-    res.json(reviews);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   PUT /api/reviews/:id
-// @desc    Update a review
-// @access  Private
-router.put('/:id', protect, async (req, res) => {
-  try {
-    const { rating, comment } = req.body;
-
-    const review = await Review.findById(req.params.id);
-    if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-
-    // Check if user owns this review
-    if (review.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to update this review' });
-    }
-
-    if (rating !== undefined) {
-      if (rating < 1 || rating > 5) {
-        return res.status(400).json({ message: 'Rating must be between 1 and 5' });
-      }
-      review.rating = rating;
-    }
-
-    if (comment !== undefined) {
-      review.comment = comment;
-    }
-
-    review.updatedAt = Date.now();
-    await review.save();
-
-    // Update product rating
-    await updateProductRating(review.product);
-
-    const updatedReview = await Review.findById(review._id)
-      .populate('user', 'name email')
-      .populate('product', 'name');
-
-    res.json({
-      message: 'Review updated successfully',
-      review: updatedReview
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
+// @desc    Delete review
 // @route   DELETE /api/reviews/:id
-// @desc    Delete a review
 // @access  Private
 router.delete('/:id', protect, async (req, res) => {
   try {
@@ -207,68 +146,49 @@ router.delete('/:id', protect, async (req, res) => {
     if (!review) {
       return res.status(404).json({ message: 'Review not found' });
     }
-
-    // Check if user owns this review or is admin
-    if (review.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ message: 'Not authorized to delete this review' });
+    if (review.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
-    const productId = review.product;
-    await review.deleteOne();
+    await review.remove();
 
     // Update product rating
-    await updateProductRating(productId);
+    await updateProductRating(review.product);
 
-    res.json({ message: 'Review deleted successfully' });
+    res.json({ message: 'Review removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// @route   GET /api/reviews/check/:productId
-// @desc    Check if user can review a product (has ordered it)
-// @access  Private
-router.get('/check/:productId', protect, async (req, res) => {
-  try {
-    const hasOrdered = await Order.findOne({
-      user: req.user._id,
-      'orderItems.product': req.params.productId,
-      isPaid: true
-    });
 
-    const hasReviewed = await Review.findOne({
-      user: req.user._id,
-      product: req.params.productId
-    });
 
-    res.json({
-      canReview: !!hasOrdered,
-      hasReviewed: !!hasReviewed,
-      hasOrdered: !!hasOrdered
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+// Update average rating for product
+const updateProductRating = async (productId) => {
+  const productObjectId = new mongoose.Types.ObjectId(productId);
 
-// @route   GET /api/reviews/admin
-// @desc    Get all reviews (Admin only)
-// @access  Private/Admin
-router.get('/admin', protect, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Admin access required' });
+  const reviews = await Review.aggregate([
+    { $match: { product: productObjectId } },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: '$rating' },
+        numReviews: { $sum: 1 }
+      }
     }
+  ]);
 
-    const reviews = await Review.find()
-      .populate('user', 'name email')
-      .populate('product', 'name images')
-      .sort({ createdAt: -1 });
+  const rating = reviews[0]?.avgRating ?? 0;
+  const numReviews = reviews[0]?.numReviews ?? 0;
 
-    res.json(reviews);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  await Product.findByIdAndUpdate(
+    productId,
+    {
+      rating: Math.round(rating * 10) / 10,
+      numReviews
+    },
+    { new: true }
+  );
+};
 
 export default router;

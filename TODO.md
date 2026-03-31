@@ -1,0 +1,24 @@
+# Full Site Mobile Responsiveness (Customer + Admin)
+
+- [ ] Step 1: Global responsive safety updates in `client/src/index.css`
+- [ ] Step 2: Rebuild `client/src/components/Header.jsx` mobile navbar behavior
+- [ ] Step 3: Improve `client/src/components/Footer.jsx` for small screens
+- [ ] Step 4: Responsive updates for customer pages
+  - [ ] `client/src/pages/Home.jsx`
+  - [ ] `client/src/pages/Products.jsx`
+  - [ ] `client/src/pages/ProductDetails.jsx`
+  - [ ] `client/src/pages/Cart.jsx`
+  - [ ] `client/src/pages/Checkout.jsx`
+  - [ ] `client/src/pages/Category.jsx`
+  - [ ] `client/src/pages/CategoryLanding.jsx`
+  - [ ] `client/src/pages/Contact.jsx`
+  - [ ] `client/src/pages/Login.jsx`
+  - [ ] `client/src/pages/Register.jsx`
+- [ ] Step 5: Responsive updates for admin pages
+  - [ ] `client/src/pages/AdminDashboard.jsx`
+  - [ ] `client/src/pages/AdminProducts.jsx`
+  - [ ] `client/src/pages/AdminOrders.jsx`
+  - [ ] `client/src/pages/AdminReviews.jsx`
+  - [ ] `client/src/pages/AdminCoupons.jsx`
+  - [ ] `client/src/pages/AdminBanners.jsx`
+- [ ] Step 6: Build verification (`npm run build --prefix client`)

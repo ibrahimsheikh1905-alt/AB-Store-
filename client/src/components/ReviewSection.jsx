@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { reviewsAPI } from '../utils/api';
 import { FaStar, FaUser } from 'react-icons/fa';
 
-const ReviewSection = ({ productId, productRating, productNumReviews }) => {
+const ReviewSection = ({ productId, productRating, productNumReviews, onReviewSubmitted }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,24 +70,22 @@ const ReviewSection = ({ productId, productRating, productNumReviews }) => {
     setSuccess('');
 
     try {
-      await reviewsAPI.create({
-        productId,
+      await reviewsAPI.create(productId, {
         rating,
         comment
       });
+
 
       setSuccess('Review submitted successfully!');
       setRating(5);
       setComment('');
       setShowForm(false);
       setHasReviewed(true);
-      fetchReviews();
-      checkCanReview();
-      
-      // Reload page to update product rating
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await fetchReviews();
+      await checkCanReview();
+      if (onReviewSubmitted) {
+        await onReviewSubmitted();
+      }
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to submit review');
     } finally {

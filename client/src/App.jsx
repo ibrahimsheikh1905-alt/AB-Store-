@@ -10,7 +10,8 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Collections from './pages/Collections';
+import CategoryLanding from './pages/CategoryLanding';
+import Category from './pages/Category';
 import AdminLogin from './pages/AdminLogin';
 import AdminRegister from './pages/AdminRegister';
 import AdminDashboard from './pages/AdminDashboard';
@@ -18,6 +19,7 @@ import AdminProducts from './pages/AdminProducts';
 import AdminOrders from './pages/AdminOrders';
 import AdminReviews from './pages/AdminReviews';
 import AdminCoupons from './pages/AdminCoupons';
+import AdminBanners from './pages/AdminBanners';
 import OrderHistory from './pages/OrderHistory';
 import OrderSuccess from './pages/OrderSuccess';
 import Contact from './pages/Contact';
@@ -27,6 +29,7 @@ import Shipping from './pages/Shipping';
 import Refund from './pages/Refund';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
@@ -35,11 +38,13 @@ function App() {
         <Router>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <ScrollToTop />
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<Products />} />
-                <Route path="/collections" element={<Collections />} />
+                <Route path="/category" element={<CategoryLanding />} />
+                <Route path="/category/:category" element={<Category />} />
                 <Route path="/products/:id" element={<ProductDetails />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
@@ -96,6 +101,14 @@ function App() {
                   element={
                     <AdminRoute>
                       <AdminCoupons />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/banners"
+                  element={
+                    <AdminRoute>
+                      <AdminBanners />
                     </AdminRoute>
                   }
                 />

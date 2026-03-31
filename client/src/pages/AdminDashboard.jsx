@@ -422,6 +422,34 @@ const AdminDashboard = () => {
             </div>
           </div>
         </Link>
+
+        <Link
+          to="/admin/banners"
+          className="group bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-pink-300 transform hover:-translate-y-1"
+        >
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-gradient-to-br from-pink-500 to-rose-700 p-5 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <svg
+                className="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16v10H4zM2 19h20M8 9h8" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors">
+              Hero Banners
+            </h2>
+            <p className="text-gray-500 text-sm mb-4">Manage home category banners</p>
+            <div className="flex items-center text-pink-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
+              <span>Manage Banners</span>
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );

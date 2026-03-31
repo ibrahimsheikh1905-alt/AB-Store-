@@ -9,6 +9,8 @@ import { protect, admin } from '../middleware/auth.js';
 import cloudinary from '../utils/cloudinary.js';
 import streamifier from 'streamifier';
 
+const router = express.Router();
+
 // ✅ Multer memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -46,7 +48,13 @@ router.post('/products', upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
+
+
     let imageUrls = [];
+    if (req.body.imageUrl) {
+      const urls = req.body.imageUrl.split(',').map(url => url.trim()).filter(url => url);
+      imageUrls.push(...urls);
+    }
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const uploadResult = await new Promise((resolve, reject) => {
@@ -62,6 +70,8 @@ router.post('/products', upload.array('images', 5), async (req, res) => {
         imageUrls.push(uploadResult.secure_url);
       }
     }
+
+
 
     const product = new Product({
       name,
@@ -90,7 +100,13 @@ router.put('/products/:id', upload.array('images', 5), async (req, res) => {
 
     const { name, description, price, originalPrice, category, inStock, stockQuantity, featured } = req.body;
 
+
+
     let images = product.images;
+    if (req.body.imageUrl) {
+      const urls = req.body.imageUrl.split(',').map(url => url.trim()).filter(url => url);
+      images = urls;
+    }
     if (req.files && req.files.length > 0) {
       images = [];
       for (const file of req.files) {
@@ -107,6 +123,8 @@ router.put('/products/:id', upload.array('images', 5), async (req, res) => {
         images.push(uploadResult.secure_url);
       }
     }
+
+
 
     product.name = name || product.name;
     product.description = description || product.description;

@@ -14,7 +14,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
-  const [filePreviews, setFilePreviews] = useState([]);
+  const [filePreviews, setFilePreviews] = useState([]); // Remove after Cloudinary only
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,15 +28,18 @@ const AdminProducts = () => {
     imageUrl: '',
   });
 
+
   useEffect(() => {
-    if (!authLoading) {
-      if (!user || !user.isAdmin) {
-        navigate('/login');
-        return;
-      }
-      fetchProducts();
+    if (authLoading) return; // Wait for auth to load
+    
+    if (!user || !user.isAdmin) {
+      navigate('/login');
+      return;
     }
+    
+    fetchProducts();
   }, [user, authLoading, navigate]);
+
 
   const fetchProducts = async () => {
     try {
@@ -51,18 +54,7 @@ const AdminProducts = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    if (type === 'file') {
-      setFormData({ ...formData, images: files });
-      if (files && files.length) {
-        const previews = Array.from(files).map((file) => ({
-          name: file.name,
-          url: URL.createObjectURL(file),
-        }));
-        setFilePreviews(previews);
-      } else {
-        setFilePreviews([]);
-      }
-    } else if (type === 'checkbox') {
+    if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -72,16 +64,15 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+
       const productData = new FormData();
+      productData.append('imageUrl', formData.imageUrl);
       for (const key in formData) {
-        if (key === 'images' && formData.images) {
-          for (let i = 0; i < formData.images.length; i++) {
-            productData.append('images', formData.images[i]);
-          }
-        } else {
+        if (key !== 'imageUrl' && key !== 'images') {
           productData.append(key, formData[key]);
         }
       }
+
 
       if (editingProduct) {
         await adminAPI.updateProduct(editingProduct._id, productData);
@@ -322,14 +313,18 @@ const AdminProducts = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <input
-                  type="text"
+                <select
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Men">Men</option>
+                  <option value="Women">Women</option>
+                  <option value="Kids">Kids</option>
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -345,65 +340,41 @@ const AdminProducts = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
+
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cloudinary URL(s)</label>
                   <input
-                    type="file"
-                    name="images"
+                    type="text"
+                    name="imageUrl"
+                    value={formData.imageUrl || ''}
                     onChange={handleInputChange}
-                    multiple
-                    accept="image/*"
+                    placeholder="https://res.cloudinary.com/... (Multiple: url1.jpg, url2.jpg, url3.jpg)"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
-                  <div className="mt-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Or paste Cloudinary Image URL
-                    </label>
-                    <input
-                      type="text"
-                      name="imageUrl"
-                      value={formData.imageUrl || ''}
-                      onChange={handleInputChange}
-                      placeholder="https://res.cloudinary.com/..."
-                      className="w-full px-3 py-1 border border-gray-300 rounded"
-                    />
-                  </div>
-                  {editingProduct?.images?.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-semibold text-gray-600 mb-2">Current images</p>
-                      <div className="grid grid-cols-4 gap-2">
-                        {editingProduct.images.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={getImageUrl(img)}
-                            alt={`Current ${idx + 1}`}
-                            className="h-16 w-full object-cover rounded border border-gray-200"
-                            onError={(e) => {
-                              e.target.src = '/no-image.png';
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {filePreviews.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-semibold text-gray-600 mb-2">New upload preview</p>
-                      <div className="grid grid-cols-4 gap-2">
-                        {filePreviews.map((file, idx) => (
-                          <div key={idx} className="relative">
-                            <img
-                              src={file.url}
-                              alt={file.name}
-                              className="h-16 w-full object-cover rounded border border-orange-200"
-                            />
-                            <p className="mt-1 text-[10px] truncate text-gray-600">{file.name}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className="mt-1 text-xs text-gray-500">Multiple URLs? Separate with commas (,)</p>
                 </div>
+
+                {editingProduct?.images?.length > 0 && (
+                  <div className="col-span-2">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">Current images</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {editingProduct.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={getImageUrl(img)}
+                          alt={`Current ${idx + 1}`}
+                          className="h-16 w-full object-cover rounded border border-gray-200"
+                          onError={(e) => {
+                            e.target.src = '/no-image.png';
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+
               </div>
               <div className="flex items-center space-x-4">
                 <label className="flex items-center">

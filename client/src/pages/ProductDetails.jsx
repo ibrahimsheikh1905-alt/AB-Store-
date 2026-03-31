@@ -35,20 +35,20 @@ const ProductDetails = () => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await productsAPI.getById(id);
-        setProduct(response.data);
-        setSelectedImage(0);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        navigate('/products');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProduct = async () => {
+    try {
+      const response = await productsAPI.getById(id);
+      setProduct(response.data);
+      setSelectedImage(0);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      navigate('/products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProduct();
   }, [id, navigate]);
 
@@ -314,6 +314,7 @@ const ProductDetails = () => {
             productId={product._id}
             productRating={product.rating || 0}
             productNumReviews={product.numReviews || 0}
+            onReviewSubmitted={fetchProduct}
           />
         </div>
       </div>

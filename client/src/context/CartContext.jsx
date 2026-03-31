@@ -1,4 +1,6 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { getImageUrl } from '../utils/api';
+
 
 const CartContext = createContext();
 
@@ -16,9 +18,20 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+      try {
+        const parsed = JSON.parse(savedCart);
+        // Validate items
+        const validItems = parsed.filter(item => item && item._id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number' && item.quantity > 0);
+        setCartItems(validItems);
+      } catch (error) {
+        console.error('Cart parse error:', error);
+        localStorage.removeItem('cart');
+        setCartItems([]);
+      }
     }
+
   }, []);
+
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
@@ -40,14 +53,13 @@ export const CartProvider = ({ children }) => {
         ...prevItems,
         {
           _id: product._id,
-          name: product.name,
-          price: product.price,
-          image: product.images && product.images[0] 
-            ? (product.images[0].startsWith('http') ? product.images[0] : `${import.meta.env.VITE_API_URL}${product.images[0]}`)
-            : '/no-image.png',
+          name: product.name || 'Product',
+          price: Number(product.price) || 0,
+          image: getImageUrl(product.images?.[0]),
           quantity,
         },
       ];
+
     });
   };
 
